@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>РМФЦ — Мобильное приложение</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+:root{
+--blue:#2563eb;
+--green:#16a34a;
+--bg:#f5f7fb;
+--card:#ffffff;
+--text:#111827;
+}
+
+.dark{
+--bg:#0f172a;
+--card:#1e293b;
+--text:#e5e7eb;
+}
+
+body{
+margin:0;
+font-family:Inter;
+background:var(--bg);
+color:var(--text);
+padding-bottom:80px;
+}
+
+/* HEADER */
+header{
+background:linear-gradient(90deg,#0f172a,#2563eb,#16a34a);
+color:white;
+padding:14px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+position:sticky;
+top:0;
+z-index:1000;
+}
+
+/* LOGO LEFT */
+.logo{
+display:flex;
+align-items:center;
+gap:10px;
+}
+
+.container{
+width:95%;
+margin:10px auto;
+}
+
+/* CARDS */
+.card{
+background:var(--card);
+border-radius:16px;
+padding:14px;
+margin-bottom:12px;
+border-left:4px solid var(--green);
+box-shadow:0 6px 18px rgba(0,0,0,0.06);
+}
+
+input,textarea,select{
+width:100%;
+padding:12px;
+margin:6px 0 12px;
+border-radius:12px;
+border:1px solid #d1d5db;
+font-size:16px;
+box-sizing:border-box;
+}
+
+button{
+padding:12px;
+border:none;
+border-radius:12px;
+cursor:pointer;
+font-weight:600;
+}
+
+.primary{background:var(--blue);color:white;}
+.gray{background:#e5e7eb;}
+
+.entry{
+border-left:4px solid var(--blue);
+padding:10px;
+margin-bottom:10px;
+background:rgba(0,0,0,0.03);
+border-radius:12px;
+}
+
+.badge{
+font-size:11px;
+padding:3px 6px;
+border-radius:6px;
+color:white;
+}
+
+.j{background:#ef4444;}
+.p{background:#f59e0b;}
+.b{background:#10b981;}
+
+.small{font-size:12px;color:gray;}
+
+/* SECTIONS */
+.section{display:none;}
+.section.active{display:block;}
+
+/* BOTTOM NAV */
+.bottom-nav{
+position:fixed;
+bottom:0;
+left:0;
+width:100%;
+background:var(--card);
+display:flex;
+justify-content:space-around;
+padding:10px 0;
+box-shadow:0 -5px 20px rgba(0,0,0,0.15);
+border-top-left-radius:18px;
+border-top-right-radius:18px;
+}
+
+.bottom-nav button{
+background:none;
+font-size:20px;
+}
+
+/* MOBILE */
+@media(max-width:900px){
+header{
+text-align:center;
+}
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<header>
+
+<div class="logo">
+
+<svg width="42" height="42" viewBox="0 0 100 100">
+<path d="M50 5 L90 25 L80 90 L50 100 L20 90 L10 25 Z" fill="#0ea5e9" opacity="0.25"/>
+<polygon points="50,15 62,90 38,90" fill="white"/>
+<polygon points="25,30 35,90 15,90" fill="white" opacity="0.9"/>
+<polygon points="75,30 85,90 65,90" fill="white" opacity="0.9"/>
+<rect x="48" y="45" width="4" height="6" fill="#16a34a"/>
+</svg>
+
+<div>
+<b>РМФЦ</b><br>
+<span style="font-size:11px;">Портал обращений</span>
+</div>
+
+</div>
+
+</header>
+
+<div class="container">
+
+<!-- FORM -->
+<div id="formTab" class="section active">
+
+<div class="card">
+
+<h3>Новое обращение</h3>
+
+<form id="form">
+
+<input id="name" placeholder="ФИО" required>
+<input id="email" placeholder="Email" required>
+
+<select id="type">
+<option>Жалоба</option>
+<option>Предложение</option>
+<option>Благодарность</option>
+</select>
+
+<textarea id="msg" rows="4" placeholder="Текст..." required></textarea>
+
+<button class="primary">Отправить</button>
+
+</form>
+
+<p id="status"></p>
+
+</div>
+
+</div>
+
+<!-- LIST -->
+<div id="listTab" class="section">
+
+<div class="card">
+<h3>Обращения</h3>
+<div id="list"></div>
+</div>
+
+</div>
+
+<!-- STATS -->
+<div id="statsTab" class="section">
+
+<div class="card">
+<h3>Статистика</h3>
+<canvas id="chart"></canvas>
+</div>
+
+</div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+
+<button onclick="showTab('form')">➕</button>
+<button onclick="showTab('list')">📄</button>
+<button onclick="showTab('stats')">📊</button>
+<button onclick="toggleTheme()">🌙</button>
+
+</div>
+
+<script>
+
+let chart;
+
+/* DATA */
+function getData(){
+return JSON.parse(localStorage.getItem("db"))||[];
+}
+
+function saveData(d){
+localStorage.setItem("db",JSON.stringify(d));
+}
+
+/* FORM */
+form.onsubmit=e=>{
+e.preventDefault();
+
+let d=getData();
+
+d.push({
+id:"RMFC-"+Math.floor(Math.random()*99999),
+name:name.value,
+email:email.value,
+type:type.value,
+msg:msg.value,
+status:"Новое",
+date:new Date().toLocaleString()
+});
+
+saveData(d);
+form.reset();
+render();
+
+status.innerHTML="✔ Отправлено";
+}
+
+/* THEME */
+function toggleTheme(){
+document.body.classList.toggle("dark");
+}
+
+/* TABS */
+function showTab(tab){
+
+document.getElementById("formTab").classList.remove("active");
+document.getElementById("listTab").classList.remove("active");
+document.getElementById("statsTab").classList.remove("active");
+
+if(tab==="form")document.getElementById("formTab").classList.add("active");
+if(tab==="list")document.getElementById("listTab").classList.add("active");
+if(tab==="stats")document.getElementById("statsTab").classList.add("active");
+
+}
+
+/* RENDER */
+function render(){
+
+let data=getData();
+let list=document.getElementById("list");
+list.innerHTML="";
+
+let j=0,p=0,b=0;
+
+data.forEach(x=>{
+
+if(x.type==="Жалоба")j++;
+if(x.type==="Предложение")p++;
+if(x.type==="Благодарность")b++;
+
+list.innerHTML+=`
+<div class="entry">
+<span class="badge">${x.type}</span>
+<b>${x.id}</b><br>
+${x.msg}<br>
+<div class="small">${x.name} | ${x.status}</div>
+</div>`;
+});
+
+draw(j,p,b);
+}
+
+/* CHART */
+function draw(j,p,b){
+
+if(chart)chart.destroy();
+
+chart=new Chart(document.getElementById("chart"),{
+type:"doughnut",
+data:{
+labels:["Жалобы","Предложения","Благодарности"],
+datasets:[{
+data:[j,p,b],
+backgroundColor:["#ef4444","#f59e0b","#10b981"]
+}]
+}
+});
+}
+
+render();
+
+</script>
+
+</body>
+</html>
